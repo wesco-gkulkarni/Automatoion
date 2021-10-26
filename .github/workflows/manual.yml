@@ -21,24 +21,46 @@ jobs:
   # This workflow contains a single job called "greet"
   greet:
     # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+    runs-on: windows-latest #ubuntu-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     # Runs a single command using the runners shell
     - name: Send greeting
       run: echo "Hello ${{ github.event.inputs.name }}"
-      
-    
-    - name: setup git config
-      run: |
-        # setup the username and email. I tend to use 'GitHub Actions Bot' with no email by default
-        git config user.name "GitHub Actions Bot"
-        git config user.email "<>"
 
-    - name: commit
-      run: |
-        # Stage the file, commit and push
-        git add time.txt
-        git commit -m "new date commit"
-        git push origin master
+    - name: who-am-i action
+      uses: wesco-gkulkarni/Automatoion/who-am-i@main
+      with:
+        environment-url: 'https://dev-wesco.crm.dynamics.com/'
+        app-id: '59ed2084-023c-47a9-95bf-c2b8c3088864'
+        tenant-id: '381d31b0-f4b9-4f22-a0dd-92488db3eb82'
+        client-secret: '0lu.e9bduH38rDuNCghaU-6v_yh_8U7ueO'
+        
+    - name: export-solution action
+      uses: wesco-gkulkarni/Automatoion/export-solution@main
+      with:
+        environment-url: 'https://dev-wesco.crm.dynamics.com/'
+        app-id: '59ed2084-023c-47a9-95bf-c2b8c3088864'
+        tenant-id: '381d31b0-f4b9-4f22-a0dd-92488db3eb82'
+        client-secret: '0lu.e9bduH38rDuNCghaU-6v_yh_8U7ueO'
+        solution-name: WESCOUSD
+        solution-output-file: out/exported/WESCOUSD.zip
+        
+    - name: unpack-solution action
+      uses: wesco-gkulkarni/Automatoion/unpack-solution@main
+      with:
+        solution-file: out/exported/WESCOUSD.zip
+        solution-folder: out/solutions/WESCOUSD
+        solution-type: 'Unmanaged'
+        overwrite-files: true
+        
+    - name: branch-solution, prepare it for a PullRequest
+      uses: wesco-gkulkarni/Automatoion/branch-solution@main
+      with:
+        solution-folder: out/solutions/WESCOUSD/
+        solution-target-folder: solutions/WESCOUSD/
+        #solution-folder: ${{ github.event.inputs.solution_folder}}/${{ github.event.inputs.solution_name }}
+        #solution-target-folder: ${{ github.event.inputs.solution_target_folder}}/${{ github.event.inputs.solution_name }}
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        allow-empty-commit: true
